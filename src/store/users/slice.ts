@@ -46,18 +46,30 @@ export const userSlice = createSlice({
 		addNewUser: (state, action: PayloadAction<User>) => {
 			// const id = crypto.randomUUID();
 			const maxId = state.reduce((mx, user) => Math.max(mx, user.id), 0);
-			return [...state, { id: maxId + 1, ...action.payload }];
+			//* this i can to do it because Redux-toolkit use "immer package"
+			state.push({
+				id: maxId + 1,
+				...action.payload,
+			});
 		},
 		deleteUserById: (state, action: PayloadAction<UserId>) => {
 			const id = action.payload;
 			return state.filter((user) => user.id !== id);
 		},
-		rollbackUser: (state, action: PayloadAction<UserWithId>) => {
+		rollbackDeletedUser: (state, action: PayloadAction<UserWithId>) => {
 			const isUserAlreadyDefined = state.some(
 				(user) => user.id === action.payload.id,
 			);
 			if (!isUserAlreadyDefined) {
-				return [...state, action.payload];
+				state.push(action.payload);
+			}
+		},
+		rollbackAddedUser: (state, action: PayloadAction<UserId>) => {
+			const isUserAlreadyDefined = state.some(
+				(user) => user.id === action.payload,
+			);
+			if (isUserAlreadyDefined) {
+				return state.filter((user) => user.id !== action.payload);
 			}
 		},
 	},
@@ -65,4 +77,9 @@ export const userSlice = createSlice({
 
 export default userSlice.reducer;
 
-export const { deleteUserById, addNewUser, rollbackUser } = userSlice.actions;
+export const {
+	deleteUserById,
+	addNewUser,
+	rollbackDeletedUser,
+	rollbackAddedUser,
+} = userSlice.actions;

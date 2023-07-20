@@ -46,7 +46,6 @@ export default function ListOfUsers() {
 								{item.name}
 							</TableCell>
 							<TableCell>{item.email}</TableCell>
-							<TableCell>{item.github}</TableCell>
 							<TableCell className="flex gap-3">
 								<button type="button">
 									<svg
