@@ -56,21 +56,33 @@ export const userSlice = createSlice({
 			const id = action.payload;
 			return state.filter((user) => user.id !== id);
 		},
+		editUser: (state, action: PayloadAction<UserWithId>) => {
+			const newUserVersion = action.payload;
+			return state.map((user) => {
+				if (user.id !== newUserVersion.id) return user;
+				return {
+					...user,
+					...newUserVersion,
+				};
+			});
+		},
 		rollbackDeletedUser: (state, action: PayloadAction<UserWithId>) => {
-			const isUserAlreadyDefined = state.some(
-				(user) => user.id === action.payload.id,
-			);
+			const isUserAlreadyDefined = state.some((user) => user.id === action.payload.id);
 			if (!isUserAlreadyDefined) {
 				state.push(action.payload);
 			}
 		},
 		rollbackAddedUser: (state, action: PayloadAction<UserId>) => {
-			const isUserAlreadyDefined = state.some(
-				(user) => user.id === action.payload,
-			);
+			const isUserAlreadyDefined = state.some((user) => user.id === action.payload);
 			if (isUserAlreadyDefined) {
 				return state.filter((user) => user.id !== action.payload);
 			}
+		},
+		rollbackEditedUser: (state, action: PayloadAction<UserWithId>) => {
+			return state.map((user) => {
+				if (user.id !== action.payload.id) return user;
+				return action.payload;
+			});
 		},
 	},
 });
@@ -80,6 +92,8 @@ export default userSlice.reducer;
 export const {
 	deleteUserById,
 	addNewUser,
+	editUser,
 	rollbackDeletedUser,
 	rollbackAddedUser,
+	rollbackEditedUser,
 } = userSlice.actions;

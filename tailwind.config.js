@@ -11,6 +11,9 @@ export default {
 			gridTemplateColumns: {
 				main: "min-content minmax(0, 1fr)",
 			},
+			colors: {
+				"black-transparent": "#000000c4",
+			},
 		},
 	},
 	plugins: [],

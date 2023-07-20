@@ -5,13 +5,13 @@ import userReducer, {
 	UserWithId,
 	rollbackAddedUser,
 	rollbackDeletedUser,
+	rollbackEditedUser,
 } from "./users/slice";
 
-const persistanceLocalStorageMiddleware: Middleware =
-	(store) => (next) => (action) => {
-		next(action);
-		localStorage.setItem("__redux__state__", JSON.stringify(store.getState()));
-	};
+const persistanceLocalStorageMiddleware: Middleware = (store) => (next) => (action) => {
+	next(action);
+	localStorage.setItem("__redux__state__", JSON.stringify(store.getState()));
+};
 
 // middleware: example to use the rollback
 const syncWithDatabase: Middleware = (store) => (next) => (action) => {
@@ -19,10 +19,28 @@ const syncWithDatabase: Middleware = (store) => (next) => (action) => {
 	const previousState = store.getState();
 	next(action);
 
+	if (type === "users/editUser") {
+		const userEdited: UserWithId = payload;
+		const userBeforeEdit = (previousState.users as UserWithId[]).find(
+			(user) => user.id === userEdited.id,
+		);
+
+		fetch("https://jsonplaceholder.typicode.com/users", {
+			method: "POST",
+			body: userEdited as unknown as BodyInit,
+		})
+			.then((res) => {
+				if (res.ok) toast.success(`User ${userEdited.name} edited successfully`);
+				else throw new Error("Fail to edit the user. Check Server logs");
+			})
+			.catch((err) => {
+				if (userBeforeEdit) store.dispatch(rollbackEditedUser(userBeforeEdit));
+				console.log(err);
+			});
+	}
+
 	if (type === "users/addNewUser") {
-		const userToAdd: UserWithId | undefined = (
-			store.getState().users as UserWithId[]
-		).find(
+		const userToAdd: UserWithId | undefined = (store.getState().users as UserWithId[]).find(
 			(user) => user.github === payload.github && user.email === payload.email,
 		);
 
@@ -33,7 +51,7 @@ const syncWithDatabase: Middleware = (store) => (next) => (action) => {
 			method: "GET",
 		})
 			.then((res) => {
-				if (res.ok) toast.success(`Added User ${userIdToAdd} Successfully`);
+				if (res.ok) toast.success(`Added User ${userToAdd.name} Successfully`);
 				else throw new Error("Fail to add the user. Check Server logs");
 			})
 			.catch((err) => {
@@ -52,7 +70,7 @@ const syncWithDatabase: Middleware = (store) => (next) => (action) => {
 			method: "DELETE",
 		})
 			.then((res) => {
-				if (res.ok) toast.success(`Delete User ${userIdToRemove} Successfully`);
+				if (res.ok) toast.success(`Delete User ${userToRemove?.name} Successfully`);
 				else throw new Error("Fail to remove the user. Check Server logs");
 			})
 			.catch((err) => {
